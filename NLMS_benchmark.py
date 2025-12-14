@@ -181,41 +181,8 @@ def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
 
 
 # -----------------------------------------------------
-# Convergência — ERRO × ITERAÇÃO
+# Benchmark — Média móvel
 # -----------------------------------------------------
-# def plot_nlms_convergence(nIter, nModes, nTaps, mu, runWL, seed):
-#     rng = np.random.default_rng(seed)
-
-#     methods = [
-#         ("Original (loop)", nlms_original),
-#         ("Vectorized (broadcast-fast)", nlms_vectorized_fast),
-#     ]
-
-#     plt.figure(figsize=(10, 6))
-
-#     for label, func in methods:
-#         H = np.zeros((nModes * nModes, nTaps), dtype=np.complex128)
-#         H_ = np.zeros_like(H)
-#         err_trace = np.zeros(nIter)
-
-#         for k in range(nIter):
-#             x = rng.standard_normal((nTaps, nModes)) + 1j * rng.standard_normal((nTaps, nModes))
-#             dx = rng.standard_normal((1, nModes)) + 1j * rng.standard_normal((1, nModes))
-#             outEq = rng.standard_normal((1, nModes)) + 1j * rng.standard_normal((1, nModes))
-
-#             H, H_, err = func(x, dx, outEq, mu, H, H_, nModes, runWL)
-#             err_trace[k] = np.sum(np.abs(err) ** 2)
-
-#         plt.plot(err_trace, label=label)
-
-#     plt.xlabel("Iteração")
-#     plt.ylabel("Erro |e|²")
-#     plt.title("Convergência NLMS — Erro × Iteração")
-#     plt.legend()
-#     plt.grid(alpha=0.3)
-#     plt.tight_layout()
-#     plt.show()
-
 def plot_nlms_convergence(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
