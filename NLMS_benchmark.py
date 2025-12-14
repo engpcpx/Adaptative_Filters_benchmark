@@ -1,7 +1,7 @@
 """
 NLMS — Benchmark e Convergência
 - Preserva TODAS as funções NLMS
-- Gráfico 1: Tempo médio por iteração (com valor em cada barra)
+- Gráfico 1: C
 - Gráfico 2: Convergência (Erro × Iteração)
 """
 
@@ -124,7 +124,7 @@ def nlms_vectorized_fast(x, dx, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Benchmark — SOMENTE TEMPO
+# Benchmark — Convergência (Erro × Iteração)
 # -----------------------------------------------------
 def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
@@ -181,7 +181,7 @@ def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
 
 
 # -----------------------------------------------------
-# Benchmark — Média móvel
+# Benchmark — Convergência (Erro × Iteração)
 # -----------------------------------------------------
 def plot_nlms_convergence(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
