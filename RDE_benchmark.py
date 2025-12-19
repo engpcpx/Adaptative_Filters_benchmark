@@ -12,17 +12,20 @@ MU = 1e-4
 RUN_WL = True
 SEED = 42
 
-R_CMA = np.ones((1, N_MODES))
-
 
 # -----------------------------------------------------
-# CMA original (loop) — PRESERVADA
+# RDE original (loop) — PRESERVADO
 # -----------------------------------------------------
-def cmaUp(x, R, outEq, mu, H, H_, nModes, runWL):
+def RDE_original(x, R, outEq, mu, H, H_, nModes, runWL):
     indMode = np.arange(0, nModes)
     outEq = outEq.T
-    err = R - np.abs(outEq) ** 2
+    decidedR = np.zeros(outEq.shape, dtype=np.complex128)
 
+    for k in range(nModes):
+        indR = np.argmin(np.abs(R - np.abs(outEq[0, k])))
+        decidedR[0, k] = R[indR]
+
+    err = decidedR**2 - np.abs(outEq) ** 2
     prodErrOut = np.diag(err[0]) @ np.diag(outEq[0])
 
     for N in range(nModes):
@@ -39,15 +42,20 @@ def cmaUp(x, R, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Vetorizado com tensordot
+# Vetorizado — tensordot
 # -----------------------------------------------------
-def cma_vectorized_tensordot(x, R, outEq, mu, H, H_, nModes, runWL):
+def RDE_vectorized_tensordot(x, R, outEq, mu, H, H_, nModes, runWL):
     outEq = outEq.T
-    err = R - np.abs(outEq) ** 2
-    prodErrOut = np.diag(err[0]) @ np.diag(outEq[0])
+
+    abs_out = np.abs(outEq[0])
+    idx = np.argmin(np.abs(R[:, None] - abs_out[None, :]), axis=0)
+    decidedR = R[idx][None, :]
+
+    err = decidedR**2 - abs_out[None, :] ** 2
+    prodErrOut = np.diag(err[0] * outEq[0])
 
     inA = x.T
-    inAdaptPar = np.repeat(inA[:, np.newaxis, :], nModes, axis=1)
+    inAdaptPar = np.repeat(inA[:, None, :], nModes, axis=1)
 
     delta = mu * np.transpose(
         np.tensordot(prodErrOut, np.conj(inAdaptPar), axes=([1], [1])),
@@ -67,69 +75,73 @@ def cma_vectorized_tensordot(x, R, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Vetorizado com einsum
+# Vetorizado — einsum
 # -----------------------------------------------------
-def cma_vectorized_einsum(x, R, outEq, mu, H, H_, nModes, runWL):
+def RDE_vectorized_einsum(x, R, outEq, mu, H, H_, nModes, runWL):
     outEq = outEq.T
-    err = R - np.abs(outEq) ** 2
-    prodErrOut = np.diag(err[0]) @ np.diag(outEq[0])
+
+    abs_out = np.abs(outEq[0])
+    idx = np.argmin(np.abs(R[:, None] - abs_out[None, :]), axis=0)
+    decidedR = R[idx][None, :]
+
+    err = decidedR**2 - abs_out[None, :] ** 2
+    prod = err[0] * outEq[0]
 
     inA = x.T
-    inAdaptPar = np.repeat(inA[:, np.newaxis, :], nModes, axis=1)
+    inAdaptPar = np.repeat(inA[:, None, :], nModes, axis=1)
 
-    delta = mu * np.einsum("ij,njp->nip", prodErrOut, np.conj(inAdaptPar))
+    delta = mu * np.einsum("i,nip->nip", prod, np.conj(inAdaptPar))
     H += delta.reshape(nModes * nModes, x.shape[0])
 
     if runWL:
-        delta_wl = mu * np.einsum("ij,njp->nip", prodErrOut, inAdaptPar)
+        delta_wl = mu * np.einsum("i,nip->nip", prod, inAdaptPar)
         H_ += delta_wl.reshape(nModes * nModes, x.shape[0])
 
     return H, H_, np.abs(err) ** 2
 
 
 # -----------------------------------------------------
-# Vetorizado rápido (broadcast)
+# Vetorizado rápido — broadcasting
 # -----------------------------------------------------
-def cma_vectorized_broadcast(x, R, outEq, mu, H, H_, nModes, runWL):
+def RDE_vectorized_broadcast(x, R, outEq, mu, H, H_, nModes, runWL):
     outEq = outEq.T
-    err = R - np.abs(outEq) ** 2
 
-    delta = (
-        mu
-        * err[0][None, :, None]
-        * outEq[0][None, :, None]
-        * np.conj(x.T[:, None, :])
-    )
+    abs_out = np.abs(outEq[0])
+    idx = np.argmin(np.abs(R[:, None] - abs_out[None, :]), axis=0)
+    decidedR = R[idx]
 
+    err = decidedR**2 - abs_out**2
+    prod = err * outEq[0]
+
+    delta = mu * prod[None, :, None] * np.conj(x.T[:, None, :])
     H += delta.reshape(nModes * nModes, x.shape[0])
 
     if runWL:
-        delta_wl = (
-            mu
-            * err[0][None, :, None]
-            * outEq[0][None, :, None]
-            * x.T[:, None, :]
-        )
+        delta_wl = mu * prod[None, :, None] * x.T[:, None, :]
         H_ += delta_wl.reshape(nModes * nModes, x.shape[0])
 
     return H, H_, np.abs(err) ** 2
 
 
 # -----------------------------------------------------
-# Benchmark — Tempo (Gráfico 1)
+# Benchmark — Tempo (Gráfico 1 — C)
 # -----------------------------------------------------
-def benchmark_cma_time(nIter, nModes, nTaps, mu, runWL, seed):
+def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
     methods = [
-        ("Original (loop)", cmaUp),
-        ("Vectorized (tensordot)", cma_vectorized_tensordot),
-        ("Vectorized (einsum)", cma_vectorized_einsum),
-        ("Vectorized (broadcast)", cma_vectorized_broadcast),
+        ("RDE Original", RDE_original),
+        ("RDE tensordot", RDE_vectorized_tensordot),
+        ("RDE einsum", RDE_vectorized_einsum),
+        ("RDE broadcast", RDE_vectorized_broadcast),
     ]
 
     xs = rng.standard_normal((nIter, nTaps, nModes)) + 1j * rng.standard_normal((nIter, nTaps, nModes))
+
+    # ✅ CORREÇÃO 1: outEq com shape (nModes, 1)
     outs = rng.standard_normal((nIter, nModes, 1)) + 1j * rng.standard_normal((nIter, nModes, 1))
+
+    R = np.array([1, 3, 5])
 
     results = {}
 
@@ -139,44 +151,47 @@ def benchmark_cma_time(nIter, nModes, nTaps, mu, runWL, seed):
 
         t0 = time.perf_counter()
         for k in range(nIter):
-            H, H_, _ = func(xs[k], R_CMA, outs[k], mu, H, H_, nModes, runWL)
+            H, H_, _ = func(xs[k], R, outs[k], mu, H, H_, nModes, runWL)
         t = time.perf_counter() - t0
 
         results[name] = t / nIter
-        print(f"{name:30s}: {results[name]*1e6:8.2f} µs/it")
+        print(f"{name:20s}: {results[name]*1e6:8.2f} µs/it")
 
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(results.keys(), [v * 1e6 for v in results.values()])
+    labels = list(results.keys())
+    values = [v * 1e6 for v in results.values()]
+    bars = plt.bar(labels, values)
+
     plt.ylabel("Tempo médio por iteração (µs)")
-    plt.title("Benchmark CMA — Tempo por Iteração")
+    plt.title(f"Benchmark RDE — {nIter:,} iterações")
     plt.grid(axis="y", alpha=0.3)
 
-    for bar in bars:
-        h = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, h,
-                 f"{h:.2f} µs", ha="center", va="bottom", fontweight="bold")
+    for bar, val in zip(bars, values):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
+                 f"{val:.2f}", ha="center", va="bottom", fontweight="bold")
 
     plt.tight_layout()
     plt.show(block=False)
 
 
 # -----------------------------------------------------
-# Convergência CMA (Gráfico 2) — METODOLOGIA NLMS
+# Convergência — Erro × Iteração (Gráfico 2)
 # -----------------------------------------------------
-def plot_cma_convergence(nIter, nModes, nTaps, mu, runWL, seed):
+def plot_rde_convergence(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
     methods = [
-        ("Original (loop)", cmaUp),
-        ("Vectorized (broadcast)", cma_vectorized_broadcast),
+        ("RDE Original", RDE_original),
+        ("RDE Broadcast", RDE_vectorized_broadcast),
     ]
 
     WINDOW = 200
+    R = np.array([1, 3, 5])
 
     def moving_stats(x, w):
-        mean = np.convolve(x, np.ones(w)/w, mode="valid")
-        sq_mean = np.convolve(x**2, np.ones(w)/w, mode="valid")
-        std = np.sqrt(np.maximum(sq_mean - mean**2, 0))
+        mean = np.convolve(x, np.ones(w) / w, mode="valid")
+        sq = np.convolve(x**2, np.ones(w) / w, mode="valid")
+        std = np.sqrt(np.maximum(sq - mean**2, 0))
         return mean, std
 
     plt.figure(figsize=(10, 6))
@@ -188,27 +203,27 @@ def plot_cma_convergence(nIter, nModes, nTaps, mu, runWL, seed):
 
         for k in range(nIter):
             x = rng.standard_normal((nTaps, nModes)) + 1j * rng.standard_normal((nTaps, nModes))
-            outEq = rng.standard_normal((nModes, 1)) + 1j * rng.standard_normal((nModes, 1))
 
-            H, H_, err = func(x, R_CMA, outEq, mu, H, H_, nModes, runWL)
+            # ✅ CORREÇÃO 2: outEq com shape (nModes, 1)
+            out = rng.standard_normal((nModes, 1)) + 1j * rng.standard_normal((nModes, 1))
+
+            H, H_, err = func(x, R, out, mu, H, H_, nModes, runWL)
             err_trace[k] = np.sum(err)
 
-        err_mean, err_std = moving_stats(err_trace, WINDOW)
+        mean, std = moving_stats(err_trace, WINDOW)
+        mean_db = 10 * np.log10(mean + 1e-12)
+        up = 10 * np.log10(mean + std + 1e-12)
+        dn = 10 * np.log10(np.maximum(mean - std, 1e-12))
 
-        err_db = 10 * np.log10(err_mean + 1e-12)
-        err_db_up = 10 * np.log10(err_mean + err_std + 1e-12)
-        err_db_dn = 10 * np.log10(np.maximum(err_mean - err_std, 1e-12))
+        it = np.arange(len(mean_db))
+        plt.plot(it, mean_db, label=label, linewidth=2)
+        plt.fill_between(it, dn, up, alpha=0.2)
 
-        it_axis = np.arange(len(err_db))
-
-        plt.plot(it_axis, err_db, label=label, linewidth=2)
-        plt.fill_between(it_axis, err_db_dn, err_db_up, alpha=0.2)
-
-    plt.xlabel("Iteração", fontsize=12)
-    plt.ylabel("Erro médio CMA |e|² (dB)", fontsize=12)
-    plt.title("Convergência do CMA — Validação Numérica", fontsize=13)
+    plt.xlabel("Iteração")
+    plt.ylabel("Erro médio |e|² (dB)")
+    plt.title("Convergência do RDE — Validação Numérica")
     plt.legend()
-    plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.7)
+    plt.grid(True, linestyle="--", alpha=0.6)
     plt.tight_layout()
     plt.show()
 
@@ -217,9 +232,9 @@ def plot_cma_convergence(nIter, nModes, nTaps, mu, runWL, seed):
 # MAIN
 # -----------------------------------------------------
 if __name__ == "__main__":
-    print("CMA — Benchmark + Convergência\n")
+    print("RDE — Benchmark + Convergência\n")
 
-    benchmark_cma_time(
+    benchmark_time_only(
         nIter=N_ITER,
         nModes=N_MODES,
         nTaps=N_TAPS,
@@ -228,7 +243,7 @@ if __name__ == "__main__":
         seed=SEED,
     )
 
-    plot_cma_convergence(
+    plot_rde_convergence(
         nIter=N_ITER,
         nModes=N_MODES,
         nTaps=N_TAPS,

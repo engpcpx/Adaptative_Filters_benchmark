@@ -104,7 +104,7 @@ def rls_vectorized_einsum(x, dx, outEq, lam, H, Sd, nModes):
 # -----------------------------------------------------
 # Vetorizado rápido (broadcast) — EQUIVALENTE
 # -----------------------------------------------------
-def rls_vectorized_fast(x, dx, outEq, lam, H, Sd, nModes):
+def rls_vectorized_broadcast(x, dx, outEq, lam, H, Sd, nModes):
     err = (dx - outEq.T)[0]
 
     for m in range(nModes):
@@ -136,7 +136,7 @@ def benchmark_time_only(nIter, nModes, nTaps, lam, seed):
         ("Original (loop)", rls_original),
         ("Vectorized (tensordot)", rls_vectorized_tensordot),
         ("Vectorized (einsum)", rls_vectorized_einsum),
-        ("Vectorized (broadcast-fast)", rls_vectorized_fast),
+        ("Vectorized (broadcast)", rls_vectorized_broadcast),
     ]
 
     xs = (
@@ -210,7 +210,7 @@ def plot_rls_convergence(nIter, nModes, nTaps, lam, seed):
 
     methods = [
         ("Original (loop)", rls_original),
-        ("Vectorized (broadcast-fast)", rls_vectorized_fast),
+        ("Vectorized (broadcast)", rls_vectorized_broadcast),
     ]
 
     WINDOW = 200

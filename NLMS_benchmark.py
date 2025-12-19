@@ -98,7 +98,7 @@ def nlms_vectorized_einsum(x, dx, outEq, mu, H, H_, nModes, runWL):
 # -----------------------------------------------------
 # Vetorizado rápido (broadcast)
 # -----------------------------------------------------
-def nlms_vectorized_fast(x, dx, outEq, mu, H, H_, nModes, runWL):
+def nlms_vectorized_broadcast(x, dx, outEq, mu, H, H_, nModes, runWL):
     err = (dx - outEq.T)[0]
 
     norms_sq = np.sum(np.abs(x) ** 2, axis=0) + 1e-12
@@ -133,7 +133,7 @@ def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
         ("Original (loop)", nlms_original),
         ("Vectorized (tensordot)", nlms_vectorized_tensordot),
         ("Vectorized (einsum)", nlms_vectorized_einsum),
-        ("Vectorized (broadcast-fast)", nlms_vectorized_fast),
+        ("Vectorized (broadcast)", nlms_vectorized_broadcast),
     ]
 
     xs = rng.standard_normal((nIter, nTaps, nModes)) + 1j * rng.standard_normal((nIter, nTaps, nModes))
@@ -188,7 +188,7 @@ def plot_nlms_convergence(nIter, nModes, nTaps, mu, runWL, seed):
 
     methods = [
         ("Original (loop)", nlms_original),
-        ("Vectorized (broadcast-fast)", nlms_vectorized_fast),
+        ("Vectorized (broadcast)", nlms_vectorized_broadcast),
     ]
 
     WINDOW = 200  # média móvel (ajuste fino: 50–300)
