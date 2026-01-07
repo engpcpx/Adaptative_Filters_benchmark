@@ -124,7 +124,7 @@ def RDE_vectorized_broadcast(x, R, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Benchmark — Tempo (Gráfico 1 — C)
+# Benchmark — Tempo (Gráfico 1)
 # -----------------------------------------------------
 def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
@@ -204,7 +204,6 @@ def plot_rde_convergence(nIter, nModes, nTaps, mu, runWL, seed):
         for k in range(nIter):
             x = rng.standard_normal((nTaps, nModes)) + 1j * rng.standard_normal((nTaps, nModes))
 
-            # ✅ CORREÇÃO 2: outEq com shape (nModes, 1)
             out = rng.standard_normal((nModes, 1)) + 1j * rng.standard_normal((nModes, 1))
 
             H, H_, err = func(x, R, out, mu, H, H_, nModes, runWL)
