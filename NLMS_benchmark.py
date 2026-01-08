@@ -1,7 +1,7 @@
 """
 NLMS — Benchmark e Convergência
 - Preserva TODAS as funções NLMS
-- Gráfico 1: C
+- Gráfico 1: Benchmark Temporal (µs/it)
 - Gráfico 2: Convergência (Erro × Iteração)
 """
 
@@ -124,16 +124,16 @@ def nlms_vectorized_broadcast(x, dx, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Benchmark — Convergência (Erro × Iteração)
+# Benchmark Temporal - (Gráfico 1)
 # -----------------------------------------------------
 def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
     methods = [
-        ("Original (loop)", nlms_original),
-        ("Vectorized (tensordot)", nlms_vectorized_tensordot),
-        ("Vectorized (einsum)", nlms_vectorized_einsum),
-        ("Vectorized (broadcast)", nlms_vectorized_broadcast),
+        ("NLMS Original (loop)", nlms_original),
+        ("NLMS Vectorized (tensordot)", nlms_vectorized_tensordot),
+        ("NLMS Vectorized (einsum)", nlms_vectorized_einsum),
+        ("NLMS Vectorized (broadcast)", nlms_vectorized_broadcast),
     ]
 
     xs = rng.standard_normal((nIter, nTaps, nModes)) + 1j * rng.standard_normal((nIter, nTaps, nModes))
@@ -154,7 +154,7 @@ def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
         results[name] = t / nIter
         print(f"{name:30s}: {results[name]*1e6:8.2f} µs/it")
 
-    # Gráfico 1 — Tempo
+    # Gráfico 1 — Análise Temporal
     plt.figure(figsize=(10, 6))
 
     labels = list(results.keys())
@@ -162,7 +162,7 @@ def benchmark_time_only(nIter, nModes, nTaps, mu, runWL, seed):
     bars = plt.bar(labels, values_us)
 
     plt.ylabel("Tempo médio por iteração (µs)")
-    plt.title(f"Benchmark NLMS — {nIter:,} iterações")
+    plt.title(f"Benchmark Temporal NLMS — {nIter:,} iterações")
     plt.grid(axis="y", alpha=0.3)
 
     # Anota valores em cada barra
@@ -187,8 +187,8 @@ def plot_nlms_convergence(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
     methods = [
-        ("Original (loop)", nlms_original),
-        ("Vectorized (broadcast)", nlms_vectorized_broadcast),
+        ("NLMS Original (loop)", nlms_original),
+        ("NLMS Vectorized (broadcast)", nlms_vectorized_broadcast),
     ]
 
     WINDOW = 200  # média móvel (ajuste fino: 50–300)

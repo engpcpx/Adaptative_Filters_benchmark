@@ -1,3 +1,10 @@
+"""
+CMA — Benchmark e Convergência
+- Preserva TODAS as funções CMA
+- Gráfico 1: Benchmark Temporal (µs/it)
+- Gráfico 2: Convergência (Erro × Iteração)
+"""
+
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -116,16 +123,16 @@ def cma_vectorized_broadcast(x, R, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Benchmark — Tempo (Gráfico 1)
+# Benchmark Temporal - (Gráfico 1)
 # -----------------------------------------------------
 def benchmark_cma_time(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
     methods = [
-        ("Original (loop)", cmaUp),
-        ("Vectorized (tensordot)", cma_vectorized_tensordot),
-        ("Vectorized (einsum)", cma_vectorized_einsum),
-        ("Vectorized (broadcast)", cma_vectorized_broadcast),
+        ("CMA Original (loop)", cmaUp),
+        ("CMA Vectorized (tensordot)", cma_vectorized_tensordot),
+        ("CMA Vectorized (einsum)", cma_vectorized_einsum),
+        ("CMA Vectorized (broadcast)", cma_vectorized_broadcast),
     ]
 
     xs = rng.standard_normal((nIter, nTaps, nModes)) + 1j * rng.standard_normal((nIter, nTaps, nModes))
@@ -148,7 +155,7 @@ def benchmark_cma_time(nIter, nModes, nTaps, mu, runWL, seed):
     plt.figure(figsize=(10, 6))
     bars = plt.bar(results.keys(), [v * 1e6 for v in results.values()])
     plt.ylabel("Tempo médio por iteração (µs)")
-    plt.title("Benchmark CMA — Tempo por Iteração")
+    plt.title("Benchmark Temporal CMA — Tempo por Iteração")
     plt.grid(axis="y", alpha=0.3)
 
     for bar in bars:
@@ -167,8 +174,8 @@ def plot_cma_convergence(nIter, nModes, nTaps, mu, runWL, seed):
     rng = np.random.default_rng(seed)
 
     methods = [
-        ("Original (loop)", cmaUp),
-        ("Vectorized (broadcast)", cma_vectorized_broadcast),
+        ("CMA Original (loop)", cmaUp),
+        ("CMA Vectorized (broadcast)", cma_vectorized_broadcast),
     ]
 
     WINDOW = 200
