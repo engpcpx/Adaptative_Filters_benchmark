@@ -1,6 +1,5 @@
 """
 daRDE — Benchmark e Convergência
-- Preserva TODAS as funções daRDE
 - Gráfico 1: Benchmark Temporal (µs/it)
 - Gráfico 2: Convergência (Erro × Iteração)
 """

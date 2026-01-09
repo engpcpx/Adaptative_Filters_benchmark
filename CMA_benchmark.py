@@ -1,6 +1,5 @@
 """
 CMA — Benchmark e Convergência
-- Preserva TODAS as funções CMA
 - Gráfico 1: Benchmark Temporal (µs/it)
 - Gráfico 2: Convergência (Erro × Iteração)
 """
@@ -95,7 +94,7 @@ def cma_vectorized_einsum(x, R, outEq, mu, H, H_, nModes, runWL):
 
 
 # -----------------------------------------------------
-# Vetorizado rápido (broadcast)
+# Vetorizado com broadcast
 # -----------------------------------------------------
 def cma_vectorized_broadcast(x, R, outEq, mu, H, H_, nModes, runWL):
     outEq = outEq.T

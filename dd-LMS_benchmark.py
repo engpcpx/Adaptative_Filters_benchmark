@@ -1,6 +1,5 @@
 """
 dd-LMS — Benchmark e Convergência
-- Preserva TODAS as funções dd-LMS
 - Gráfico 1: Análise Temporal
 - Gráfico 2: Convergência (Erro × Iteração)
 """

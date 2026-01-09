@@ -1,6 +1,5 @@
 """
 NLMS — Benchmark e Convergência
-- Preserva TODAS as funções NLMS
 - Gráfico 1: Benchmark Temporal (µs/it)
 - Gráfico 2: Convergência (Erro × Iteração)
 """

@@ -30,19 +30,17 @@ The repository includes benchmarks for the following adaptive filters and operat
   Normalized LMS variant with improved numerical stability.
 
 * **Decision-Directed LMS (DD-LMS)**
-  LMS operating in decision-directed mode.
+  DD-LMS operating in decision-directed mode.
 
 * **Data-Aided RDE (DA-RDE)**
-  RDE variant assisted by known reference data.
+  DA-RDE variant assisted by known reference data.
 
 * **RLS (Recursive Least Squares)**
   Adaptive algorithm with fast convergence and higher computational complexity.
 
 * **Decision-Directed RLS (DD-RLS)**
-  RLS variant operating in decision-directed mode.
+  DD-RLS variant operating in decision-directed mode.
 
-* **Static Mode**
-  Non-adaptive operation used as a performance baseline.
 
 ## Methodology
 
